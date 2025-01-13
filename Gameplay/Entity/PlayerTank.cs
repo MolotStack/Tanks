@@ -6,7 +6,7 @@ namespace Tanks.Gameplay.Entity
 {
     internal class PlayerTank : BaseTank
     {
-        public PlayerTank(Level level, Vector2Int currentPosition) : base(level, currentPosition)
+        public PlayerTank(Level level, Vector2Int currentPosition, int health, float timeReload) : base(level, currentPosition, health, timeReload)
         {
             _tag = "PlayerTank";
 
@@ -33,6 +33,16 @@ namespace Tanks.Gameplay.Entity
                 _timeMove = 0;
                 Move(_directionInput);
             }
+
+            if (_timeReload < _timeShoot && !_canShoot)
+            {
+                _timeReload += deltaTime;
+            }
+            else
+            {
+                _timeReload = 0;
+                _canShoot = true;
+            }
         }
 
         public override void TakeDamage(int damage)
@@ -40,15 +50,19 @@ namespace Tanks.Gameplay.Entity
             base.TakeDamage(damage);
         }
 
-        public void Die()
+        public override void Die()
         {
             InputHandler.Instance.OnChangedDirection -= OnMove;
             InputHandler.Instance.OnShoot -= Shoot;
+
+            _isDie = true;
+            _currentLevel.RemoveEntityMap(_currentPosition);
+            _currentLevel.EntityRenderUpdate(this);
         }
 
         private void OnMove(Vector2Int direction)
         {
             _directionInput = direction;
         }
-}
+    }
 }

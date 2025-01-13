@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using System.IO.Pipes;
 using Tanks.Gameplay.Components;
 using Tanks.Gameplay.Levels.Environment;
 using Tanks.Utilities;
@@ -8,6 +9,8 @@ namespace Tanks.Gameplay.Levels
 {
     public class Map
     {
+        public List<IBehaviour> WaterCells => _waterCells;
+        public IBehaviour[,] CurrentMap  => _map;
         private IBehaviour[,] _map;
 
         private Vector2Int _spawnPositionPlayer;
@@ -17,8 +20,10 @@ namespace Tanks.Gameplay.Levels
         private Random _random;
 
         private int _countEnemySpawnPoint;
+        private int _countWater;
+        private List<IBehaviour> _waterCells ;
 
-        public Map(Vector2Int size, int seed, Level currentLevel, int countEnemySpawnPoint)
+        public Map(Vector2Int size, int seed, Level currentLevel, int countEnemySpawnPoint, int countWater)
         {
             _map = new IBehaviour[size.y, size.x];
             _random = new Random(seed);
@@ -26,7 +31,10 @@ namespace Tanks.Gameplay.Levels
             _spawnPositionEnemy = new List<Vector2Int>();
 
             _currentLevel = currentLevel;
+
             _countEnemySpawnPoint = countEnemySpawnPoint;
+            _countWater = countWater;
+            _waterCells = new List<IBehaviour>();
         }
 
         public void Generation()
@@ -40,11 +48,15 @@ namespace Tanks.Gameplay.Levels
             ThirdStageGeneration();
             FourthStageGeneration();
         }
-
         public Vector2Int GetSpawnPointPlayer()
         {
             return _spawnPositionPlayer;
         }
+        public List<Vector2Int> GetSpawnPointEnemy()
+        {
+            return _spawnPositionEnemy;
+        }
+
         public void RemoveEntity(Vector2Int position)
         {
             _map[position.y, position.x] = null;
@@ -58,7 +70,6 @@ namespace Tanks.Gameplay.Levels
             _map[behaviour.LastPosition.y, behaviour.LastPosition.x] = null;
             _map[behaviour.CurrentPosition.y, behaviour.CurrentPosition.x] = behaviour;
         }
-
         public IBehaviour[,] GetMap()
         {
             return _map;
@@ -228,9 +239,23 @@ namespace Tanks.Gameplay.Levels
 
         private void FourthStageGeneration() // делает примитивные пути от противника до игрока
         {
-            foreach (var positionEnemy in _spawnPositionEnemy)
+            for (int i = 0; i < _map.GetLength(0); i++)
             {
-                MovingTowardsPlayer(positionEnemy);
+                for (int j = 0; j < _map.GetLength(1); j++)
+                {
+                    if (_map[i, j] != null)
+                    {
+                        if (_map[i, j].Tag != "Wall")
+                        {
+                            if (_random.Next(0, 11) == 10 && _countWater > 0)
+                            {
+                                _map[i, j] = new Water(new Vector2Int(j,i), _currentLevel);
+                                _waterCells.Add(_map[i, j]);
+                                _countWater--;
+                            }
+                        }
+                    }
+                }
             }
         }
 

@@ -2,22 +2,30 @@
 using Tanks.Gameplay.Levels;
 using Tanks.Utilities;
 using Tanks.Gameplay.Animations;
+using Tanks.Gameplay.Input;
 
 namespace Tanks.Gameplay.Entity
 {
     public class BaseTank : IBehaviour
     {
-        private Vector2Int _currentDirectionMovement;
+        protected Vector2Int _currentDirectionMovement;
 
         private Animation<Vector2Int> _animations = new Animation<Vector2Int>();
+
         protected Vector2Int _directionInput;
 
-        private Projectile _projectile;
+        protected int _health;
+        protected float _timeReload = 0;
+        protected float _timeShoot;
+        protected bool _isDea = false;
+        protected bool _canShoot = false;
 
-        public BaseTank(Level level, Vector2Int currentPosition)
+        public BaseTank(Level level, Vector2Int currentPosition, int health, float timeReload)
         {
             _isDie = false;
+
             _currentLevel = level;
+
             _currentPosition = currentPosition;
             _lastPosition = _currentPosition;
 
@@ -30,6 +38,8 @@ namespace Tanks.Gameplay.Entity
             _currentDirectionMovement = Vector2Int.up;
 
             _currentLevel.EntityRenderUpdate(this);
+            _health = health;
+            _timeShoot = timeReload;
         }
 
         public void Move(Vector2Int direction)
@@ -52,7 +62,7 @@ namespace Tanks.Gameplay.Entity
                 {
                     return;
                 }
-
+                return;
             }
             _lastPosition = _currentPosition;
             _currentPosition = newPosition;
@@ -67,9 +77,13 @@ namespace Tanks.Gameplay.Entity
             _currentDirectionMovement = direction;
         }
 
-        public void Shoot()
+        public virtual void Shoot()
         {
-            _currentLevel.SpawnProjectile(new Projectile(_currentLevel, _currentPosition + _currentDirectionMovement, _currentDirectionMovement, 1));
+            if (_canShoot)
+             {
+                _canShoot = false;
+                _currentLevel.SpawnProjectile(new Projectile(false,_currentLevel, _currentPosition, _currentDirectionMovement, 1));
+            }
         }
 
         public override void Update(float deltaTime)
@@ -79,7 +93,26 @@ namespace Tanks.Gameplay.Entity
 
         public override void TakeDamage(int damage)
         {
+            if (!_isDie)
+            {
+                _health -= damage;
+                if (_health <= 0)
+                {
+                    Die();
+                }
+            }
+            else
+            {
+                Die();
+            }
+            _currentLevel.EntityRenderUpdate(this);
+        }
 
+        public virtual void Die()
+        {
+            _isDie = true;
+            _currentLevel.RemoveEntityMap(_currentPosition);
+            _currentLevel.EntityRenderUpdate(this);
         }
     }
 }

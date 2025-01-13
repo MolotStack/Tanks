@@ -1,4 +1,5 @@
 ﻿
+using System.Drawing;
 using Tanks.Gameplay.Components;
 using Tanks.Gameplay.Input;
 using Tanks.Gameplay.Levels;
@@ -12,12 +13,49 @@ namespace Tanks.Graphics
         private int _sizeSprite = 3;
         private Level _currentLevel;
 
-        public void DrawnMap(Level currentLevel)
+        public void Start()
+        {
+
+            DrawnMap();
+        }
+
+        public void StartScene(Level currentLevel)
         {
             Console.CursorVisible = false;
             _currentLevel = currentLevel;
 
-            IBehaviour[,] map = _currentLevel.GetMap();
+            Console.Clear();
+            Console.SetCursorPosition(50, 30);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(_currentLevel.Name);
+        }
+        public void GameOverScene()
+        {
+            Console.Clear();
+            Console.SetCursorPosition(50, 30);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Game Over!");
+        }
+
+        public void FinalScene()
+        {
+            Console.Clear();
+            Console.SetCursorPosition(50, 30);
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("Thanks for playing!");
+        }
+
+        public void Update()
+        {
+            CurrentLevelChangedRender();
+            InfoRender();
+        }
+
+        private void DrawnMap()
+        {
+            Console.Clear();
+
+            IBehaviour[,] map = _currentLevel.GetMap().GetMap();
 
             Console.SetCursorPosition(0, 3);
 
@@ -44,7 +82,7 @@ namespace Tanks.Graphics
             }
         }
 
-        public void CurrentLevelChangedRender()
+        private void CurrentLevelChangedRender()
         {
             if (_currentLevel.ForRender.Count > 0)
             {
@@ -57,8 +95,10 @@ namespace Tanks.Graphics
             _currentLevel.ForRender.Clear();
         }
 
-        public void EraseObject(Vector2Int position)
+        private void EraseObject(Vector2Int position)
         {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
             for (int i = 0; i < _sizeSprite; i++)
             {
                 Console.SetCursorPosition(position.x * _sizeSprite, 3 + position.y * _sizeSprite + i);
@@ -69,7 +109,7 @@ namespace Tanks.Graphics
             }
         }
 
-        public void DrawObject(IBehaviour behaviour)
+        private void DrawObject(IBehaviour behaviour)
         {
             if (behaviour.IsDie)
             {
@@ -90,24 +130,17 @@ namespace Tanks.Graphics
                     Console.ForegroundColor = behaviour.Color;
                     Console.BackgroundColor = behaviour.Background;
                     Console.Write(behaviour.CurrentSprite[j, i]);
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.BackgroundColor = ConsoleColor.Black;
                 }
             }
         }
-
-        public void Update()
+        private void InfoRender()
         {
-            CurrentLevelChangedRender();
-            DebugRender();
-        }
-
-        public void DebugRender()
-        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Black;
             Console.SetCursorPosition(0, 0);
             Console.Write("                                    ");
             Console.SetCursorPosition(0, 0);
-            Console.Write(InputHandler.Instance.Direction);
+            Console.Write("Осталось противников: " + _currentLevel.CountEnemy);
         }
     }
 }
